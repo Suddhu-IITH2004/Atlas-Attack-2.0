@@ -10,8 +10,9 @@ const tokenizeCompanions = (value = '') =>
     .map((name) => name.trim())
     .filter(Boolean);
 
-export default function PinFormModal({ visible, isAdmin, initialData, initialLocation, companionOptions = [], onClose, onSave }) {
+export default function PinFormModal({ visible, isAdmin, initialData, initialLocation, companionOptions = [], tripOptions = [], pins = [], onClose, onSave }) {
   const companionListId = useId();
+  const tripListId = useId();
   const addCompanion = useCallback((value) => {
     const normalized = value.trim();
     if (!normalized) return;
@@ -135,6 +136,26 @@ export default function PinFormModal({ visible, isAdmin, initialData, initialLoc
   }, [imageFile, fileNameSuggestion]);
 
   const normalizedCompanionOptions = useMemo(() => companionOptions.filter(Boolean), [companionOptions]);
+  const normalizedTripOptions = useMemo(
+    () => Array.from(new Set(tripOptions.filter(Boolean).map((value) => value.toString().trim()))),
+    [tripOptions]
+  );
+
+  const lastTripEntry = useMemo(() => {
+    const trimmedTripId = tripId.toString().trim();
+    if (!trimmedTripId) return null;
+    const matchingPins = pins
+      .filter((pin) => pin.tripId?.toString().trim() === trimmedTripId)
+      .filter((pin) => pin.id !== initialData?.id);
+    if (!matchingPins.length) return null;
+    const sorted = [...matchingPins].sort((a, b) => {
+      if (a.sequenceOrder !== b.sequenceOrder) return b.sequenceOrder - a.sequenceOrder;
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
+    });
+    return sorted[0];
+  }, [pins, tripId, initialData?.id]);
+
+  const nextSequenceSuggestion = lastTripEntry ? lastTripEntry.sequenceOrder + 1 : null;
 
   const resolvePlaceName = (item) => {
     const address = item.address || {};
@@ -457,11 +478,26 @@ export default function PinFormModal({ visible, isAdmin, initialData, initialLoc
             <label className="space-y-2 text-sm text-slate-200">
               <span className="text-slate-400">Trip ID</span>
               <input
+                list={tripListId}
                 value={tripId}
                 onChange={(event) => setTripId(event.target.value)}
                 className="w-full rounded-3xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-slate-100 outline-none focus:border-cyan-400"
-                placeholder="trip-2026-spring"
+                placeholder="Select or type a trip ID"
               />
+              <datalist id={tripListId}>
+                {normalizedTripOptions.map((id) => (
+                  <option key={id} value={id} />
+                ))}
+              </datalist>
+              <p className="text-xs text-slate-500">Choose an existing trip or type a new trip ID.</p>
+              {lastTripEntry && (
+                <div className="rounded-3xl border border-slate-700 bg-slate-950/90 p-3 text-sm text-slate-200">
+                  <p className="font-medium text-slate-100">Last saved update for this trip</p>
+                  <p className="mt-1 text-slate-400">Sequence ID: {lastTripEntry.sequenceOrder}</p>
+                  <p className="text-slate-400">Place: {lastTripEntry.placeName || 'Unnamed location'}</p>
+                  <p className="mt-1 text-xs text-slate-500">Suggested next sequence: {nextSequenceSuggestion}</p>
+                </div>
+              )}
             </label>
           </div>
 
@@ -474,6 +510,9 @@ export default function PinFormModal({ visible, isAdmin, initialData, initialLoc
               onChange={(event) => setSequenceOrder(Number(event.target.value))}
               className="w-full rounded-3xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-slate-100 outline-none focus:border-cyan-400"
             />
+            {nextSequenceSuggestion && (
+              <p className="text-xs text-slate-500">Suggested next sequence: {nextSequenceSuggestion}</p>
+            )}
           </label>
 
           <div className="grid gap-4 sm:grid-cols-2">

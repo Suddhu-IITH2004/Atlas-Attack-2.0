@@ -223,9 +223,9 @@ export default function App() {
             id="map-section"
             className="relative w-full min-h-[calc(100vh-140px)] overflow-hidden rounded-[32px] border border-slate-800/90 bg-slate-900/80 shadow-2xl shadow-slate-950/40"
           >
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 bg-slate-950/80 px-4 py-4 text-slate-100/90">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 bg-slate-950/80 px-4 pt-10  text-slate-100/90">
               <div className="flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-cyan-300" />
+                <MapPin className="h-auto w-5 text-cyan-300" />
                 <div>
                   <p className="text-xs uppercase tracking-[0.24em] text-slate-500">Interactive map</p>
                   <p className="text-sm text-slate-100">Pin touch, view details, and build journeys from every location.</p>
@@ -311,6 +311,8 @@ export default function App() {
         initialData={editingPin}
         initialLocation={pendingLocation}
         companionOptions={companionOptions}
+        tripOptions={tripOptions}
+        pins={pins}
         onClose={() => {
           setFormVisible(false);
           setEditingPin(null);
