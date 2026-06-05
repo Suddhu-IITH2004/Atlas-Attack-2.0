@@ -1,6 +1,9 @@
 import { useMemo } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
+
+const pinAssetUrl = new URL('icons/map-pin.png', import.meta.env.BASE_URL).href;
+
 const resolveImageUrl = (rawUrl) => {
   if (!rawUrl || !rawUrl.includes('/file/d/')) return rawUrl;
   const parts = rawUrl.split('/file/d/')[1];
@@ -13,7 +16,7 @@ const resolveImageUrl = (rawUrl) => {
 
 
 const customPinIcon = new L.Icon({
-  iconUrl: '/icons/map-pin.png',
+  iconUrl: pinAssetUrl,
   iconSize: [34, 42],
   iconAnchor: [17, 42],
   popupAnchor: [0, -36]
