@@ -30,14 +30,20 @@ const formatCoordinate = (value) => {
 };
 
 
-const customPinIcon = new L.Icon({
-  iconUrl: assetUrl('icons/map-pin.png'),
-  iconSize: [34, 42],
-  iconAnchor: [17, 42],
-  popupAnchor: [0, -36]
-});
+const tripColors = ['#38bdf8', '#f97316', '#22c55e', '#a855f7', '#f43f5e', '#eab308', '#14b8a6', '#fb7185'];
 
-L.Marker.prototype.options.icon = customPinIcon;
+const getTripColor = (tripId, mapping) => {
+  if (!tripId) return '#94a3b8';
+  return mapping[tripId] || '#38bdf8';
+};
+
+const createPinIcon = (color) =>
+  new L.DivIcon({
+    className: 'custom-pin-icon',
+    html: `<span style="background:${color};border:2px solid white;border-radius:50%;display:inline-block;box-shadow:0 0 0 6px rgba(255,255,255,0.15);width:18px;height:18px;"></span>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9]
+  });
 
 function AdminMapEvents({ isAdmin, onMapCreate }) {
   useMapEvents({
@@ -54,7 +60,7 @@ function AdminMapEvents({ isAdmin, onMapCreate }) {
 
 export default function TravelMap({ pins, isAdmin, onCreatePin, onEditPin }) {
   const defaultCenter = useMemo(() => {
-    if (!pins.length) return [36.2048, 138.2529];
+    if (!pins.length) return [35.6762, 139.6503];
     const avgLat = pins.reduce((sum, pin) => sum + pin.latitude, 0) / pins.length;
     const avgLon = pins.reduce((sum, pin) => sum + pin.longitude, 0) / pins.length;
     return [avgLat, avgLon];
@@ -74,6 +80,17 @@ export default function TravelMap({ pins, isAdmin, onCreatePin, onEditPin }) {
       .map((trip) => trip.sort((a, b) => a.sequenceOrder - b.sequenceOrder))
       .filter((route) => route.length > 1)
       .map((route) => route.map((point) => [point.latitude, point.longitude]));
+  }, [pins]);
+
+  const tripColorMap = useMemo(() => {
+    const map = {};
+    let nextColor = 0;
+    pins.forEach((pin) => {
+      if (!pin.tripId || map[pin.tripId]) return;
+      map[pin.tripId] = tripColors[nextColor % tripColors.length];
+      nextColor += 1;
+    });
+    return map;
   }, [pins]);
 
   useEffect(() => {
@@ -108,11 +125,11 @@ export default function TravelMap({ pins, isAdmin, onCreatePin, onEditPin }) {
   return (
     <>
       <MapContainer
-      center={defaultCenter}
-      zoom={3}
-      minZoom={2}
-      maxZoom={16}
-      scrollWheelZoom
+        center={defaultCenter}
+        zoom={5}
+        minZoom={2}
+        maxZoom={16}
+        scrollWheelZoom
       className="h-full w-full"
       style={{ minHeight: '55vh', height: '100%', width: '100%' }}
       attributionControl={false}
@@ -121,13 +138,17 @@ export default function TravelMap({ pins, isAdmin, onCreatePin, onEditPin }) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
-      {pins.map((pin) => (
-        <Marker
-          key={pin.id || `${pin.latitude}-${pin.longitude}-${pin.date}`}
-          position={[pin.latitude, pin.longitude]}
-          eventHandlers={{ click: () => setSelectedPin(pin) }}
-        />
-      ))}
+      {pins.map((pin) => {
+        const tripColor = getTripColor(pin.tripId, tripColorMap);
+        return (
+          <Marker
+            key={pin.id || `${pin.latitude}-${pin.longitude}-${pin.date}`}
+            position={[pin.latitude, pin.longitude]}
+            icon={createPinIcon(tripColor)}
+            eventHandlers={{ click: () => setSelectedPin(pin) }}
+          />
+        );
+      })}
 
       {tripPolylines.map((positions, index) => (
         <Polyline
