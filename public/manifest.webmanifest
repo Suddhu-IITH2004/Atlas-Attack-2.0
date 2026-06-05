@@ -2,8 +2,8 @@
   "name": "Atlas Attack",
   "short_name": "AtlasAttack",
   "description": "Personal travel-tracking PWA with offline maps and secure Google Apps Script backend.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/Atlas-Attack-2.0/",
+  "scope": "/Atlas-Attack-2.0/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "theme_color": "#0f172a",
@@ -11,13 +11,13 @@
   "categories": ["travel", "productivity"],
   "icons": [
     {
-      "src": "/icons/pwa-icon.svg",
+      "src": "/Atlas-Attack-2.0/icons/pwa-icon.svg",
       "sizes": "192x192",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "/icons/pwa-icon.svg",
+      "src": "/Atlas-Attack-2.0/icons/pwa-icon.svg",
       "sizes": "512x512",
       "type": "image/svg+xml",
       "purpose": "any maskable"

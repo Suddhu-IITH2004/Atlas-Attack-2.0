@@ -2,7 +2,10 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+const BASE_PATH = '/Atlas-Attack-2.0/';
+
 export default defineConfig({
+  base: BASE_PATH,
   plugins: [
     react(),
     VitePWA({
@@ -16,17 +19,17 @@ export default defineConfig({
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait-primary',
-        scope: '/',
-        start_url: '/',
+        scope: BASE_PATH,
+        start_url: BASE_PATH,
         icons: [
           {
-            src: '/icons/pwa-icon.svg',
+            src: `${BASE_PATH}icons/pwa-icon.svg`,
             sizes: '192x192',
             type: 'image/svg+xml',
             purpose: 'any maskable'
           },
           {
-            src: '/icons/pwa-icon.svg',
+            src: `${BASE_PATH}icons/pwa-icon.svg`,
             sizes: '512x512',
             type: 'image/svg+xml',
             purpose: 'any maskable'
@@ -35,7 +38,7 @@ export default defineConfig({
       },
       workbox: {
         cleanupOutdatedCaches: true,
-        navigateFallback: '/'
+        navigateFallback: BASE_PATH
       }
     })
   ],
