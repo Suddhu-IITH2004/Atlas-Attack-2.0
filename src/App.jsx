@@ -223,7 +223,7 @@ export default function App() {
             id="map-section"
             className="relative w-full min-h-[calc(100vh-140px)] overflow-hidden rounded-[32px] border border-slate-800/90 bg-slate-900/80 shadow-2xl shadow-slate-950/40"
           >
-            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 bg-slate-950/80 px-4 pt-10  text-slate-100/90">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800/80 bg-slate-950/80 px-4 py-4 text-slate-100/90">
               <div className="flex items-center gap-2">
                 <MapPin className="h-auto w-5 text-cyan-300" />
                 <div>
@@ -244,7 +244,7 @@ export default function App() {
               onEditPin={openEditPin}
             />
 
-            <div className="pointer-events-none absolute left-4 top-4 hidden rounded-3xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-sm text-slate-200 shadow-lg shadow-slate-950/30 md:flex">
+            <div className="pointer-events-none absolute left-4 bottom-4 hidden rounded-3xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-sm text-slate-200 shadow-lg shadow-slate-950/30 md:flex">
               <MapPin className="mr-2 h-4 w-4 text-cyan-300" />
               Focus the map, then tap any pin to show details.
             </div>

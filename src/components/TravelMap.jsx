@@ -29,6 +29,31 @@ const formatCoordinate = (value) => {
   return value || '—';
 };
 
+const formatTimestamp = (dateValue, timeValue) => {
+  // 1. Clean and normalize inputs to strings
+  const dateString = String(dateValue ?? '').trim();
+  const timeString = String(timeValue ?? '').trim();
+
+  // 2. Safely extract the date portion (ignores everything after "T" if ISO)
+  const datePart = dateString.split('T')[0];
+
+  // 3. Extract exactly the HH:mm portion from the time string
+  const timeMatch = timeString.match(/(\d{1,2}:\d{2})/);
+  const timePart = timeMatch ? timeMatch[1] : '';
+
+  // 4. Handle edge cases where one or both items are completely missing
+  if (!datePart && !timePart) {
+    return 'Unknown date/time';
+  }
+
+  // 5. Combine strings exactly as typed with (JST) appended
+  if (datePart && timePart) {
+    return `${datePart} ${timePart} (JST)`;
+  }
+  
+  // Fallbacks if only one value is present
+  return datePart ? `${datePart} (JST)` : `${timePart} (JST)`;
+};
 
 const tripColors = ['#38bdf8', '#f97316', '#22c55e', '#a855f7', '#f43f5e', '#eab308', '#14b8a6', '#fb7185'];
 
@@ -114,6 +139,7 @@ export default function TravelMap({ pins, isAdmin, onCreatePin, onEditPin }) {
   }, [selectedPin]);
 
   const selectedImageSrc = selectedPin ? resolveImageUrl(selectedPin.imageUrl) : null;
+  const selectedTimestamp = selectedPin ? formatTimestamp(selectedPin.date, selectedPin.time) : 'Unknown date/time';
 
   const closeSelectedPin = () => setSelectedPin(null);
   const handleEditSelectedPin = () => {
@@ -185,9 +211,7 @@ export default function TravelMap({ pins, isAdmin, onCreatePin, onEditPin }) {
             </div>
 
             <div className="flex-1 overflow-auto px-6 pb-6 pt-4 text-slate-800">
-              <p className="text-sm text-slate-500">
-                {selectedPin.date || 'Unknown date'} • {selectedPin.time || 'Unknown time'}
-              </p>
+              <p className="text-sm text-slate-500">{selectedTimestamp}</p>
               {selectedImageSrc && (
                 <img
                   src={selectedImageSrc}
