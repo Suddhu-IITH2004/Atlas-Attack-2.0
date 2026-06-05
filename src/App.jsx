@@ -73,6 +73,19 @@ export default function App() {
     return Array.from(new Set(ids));
   }, [pins]);
 
+  const companionOptions = useMemo(() => {
+    const names = new Set();
+    pins.forEach((pin) => {
+      if (!pin.companions) return;
+      pin.companions
+        .split(/[,;\n]/)
+        .map((value) => value.trim())
+        .filter(Boolean)
+        .forEach((name) => names.add(name));
+    });
+    return Array.from(names).sort((a, b) => a.localeCompare(b));
+  }, [pins]);
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100">
       <header className="fixed inset-x-0 top-0 z-40 border-b border-slate-800/70 bg-slate-950/95 backdrop-blur-lg">
@@ -297,6 +310,7 @@ export default function App() {
         isAdmin={isAdmin}
         initialData={editingPin}
         initialLocation={pendingLocation}
+        companionOptions={companionOptions}
         onClose={() => {
           setFormVisible(false);
           setEditingPin(null);

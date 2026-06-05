@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMapEvents } from 'react-leaflet';
+import { useEffect, useMemo, useState } from 'react';
+import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 
 const assetUrl = (relativePath) => {
@@ -16,6 +16,17 @@ const resolveImageUrl = (rawUrl) => {
   if (!fileId) return rawUrl;
   // Google Drive preview assets proxy through lh3; add a size modifier so the CDN responds quickly.
   return `https://lh3.googleusercontent.com/d/${fileId}=w1600`;
+};
+
+const formatCoordinate = (value) => {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value.toFixed(4);
+  }
+  const numeric = Number(value);
+  if (Number.isFinite(numeric)) {
+    return numeric.toFixed(4);
+  }
+  return value || '—';
 };
 
 
@@ -49,6 +60,8 @@ export default function TravelMap({ pins, isAdmin, onCreatePin, onEditPin }) {
     return [avgLat, avgLon];
   }, [pins]);
 
+  const [selectedPin, setSelectedPin] = useState(null);
+
   const tripPolylines = useMemo(() => {
     const trips = pins.reduce((acc, pin) => {
       if (!pin.tripId) return acc;
@@ -63,8 +76,38 @@ export default function TravelMap({ pins, isAdmin, onCreatePin, onEditPin }) {
       .map((route) => route.map((point) => [point.latitude, point.longitude]));
   }, [pins]);
 
+  useEffect(() => {
+    if (!selectedPin) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [selectedPin]);
+
+  useEffect(() => {
+    if (!selectedPin) return undefined;
+    const handleKey = (event) => {
+      if (event.key === 'Escape') {
+        setSelectedPin(null);
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [selectedPin]);
+
+  const selectedImageSrc = selectedPin ? resolveImageUrl(selectedPin.imageUrl) : null;
+
+  const closeSelectedPin = () => setSelectedPin(null);
+  const handleEditSelectedPin = () => {
+    if (!selectedPin) return;
+    onEditPin(selectedPin);
+    setSelectedPin(null);
+  };
+
   return (
-    <MapContainer
+    <>
+      <MapContainer
       center={defaultCenter}
       zoom={3}
       minZoom={2}
@@ -78,37 +121,13 @@ export default function TravelMap({ pins, isAdmin, onCreatePin, onEditPin }) {
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       />
-      {pins.map((pin) => {
-        const imageSrc = resolveImageUrl(pin.imageUrl);
-        return (
-        <Marker key={pin.id || `${pin.latitude}-${pin.longitude}-${pin.date}`} position={[pin.latitude, pin.longitude]}>
-          <Popup>
-            <div className="max-w-xs">
-              <p className="text-sm font-semibold text-slate-950">{pin.placeName || 'Unnamed location'}</p>
-              <p className="mt-1 text-xs text-slate-700">{pin.country} · {pin.continent}</p>
-              <p className="mt-2 text-sm text-slate-700">{pin.date} • {pin.time}</p>
-              {imageSrc && (
-                <img 
-                  src={imageSrc} 
-                  alt={pin.placeName} 
-                  className="mt-3 h-36 w-full rounded-2xl object-cover" 
-                />
-              )}
-              {pin.description && <p className="mt-3 text-sm text-slate-700">{pin.description}</p>}
-              {pin.companions && <p className="mt-3 text-sm text-slate-700"><strong>Companions:</strong> {pin.companions}</p>}
-              {isAdmin && (
-                <button
-                  type="button"
-                  onClick={() => onEditPin(pin)}
-                  className="mt-4 inline-flex w-full items-center justify-center rounded-2xl bg-cyan-500 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
-                >
-                  Edit pin
-                </button>
-              )}
-            </div>
-          </Popup>
-        </Marker>
-      );})}
+      {pins.map((pin) => (
+        <Marker
+          key={pin.id || `${pin.latitude}-${pin.longitude}-${pin.date}`}
+          position={[pin.latitude, pin.longitude]}
+          eventHandlers={{ click: () => setSelectedPin(pin) }}
+        />
+      ))}
 
       {tripPolylines.map((positions, index) => (
         <Polyline
@@ -120,5 +139,77 @@ export default function TravelMap({ pins, isAdmin, onCreatePin, onEditPin }) {
 
       <AdminMapEvents isAdmin={isAdmin} onMapCreate={onCreatePin} />
     </MapContainer>
+
+      {selectedPin && (
+        <div
+          className="fixed inset-0 z-[1200] flex items-center justify-center bg-slate-950/95 px-4 py-6 backdrop-blur"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="flex h-full max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-[32px] border border-slate-800 bg-slate-50 text-slate-900 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Selected Pin</p>
+                <h3 className="mt-1 text-xl font-semibold text-slate-900">{selectedPin.placeName || 'Unnamed location'}</h3>
+                <p className="text-sm text-slate-500">{selectedPin.country} · {selectedPin.continent}</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeSelectedPin}
+                className="rounded-full border border-slate-300 bg-white px-3 py-2 text-slate-600 transition hover:text-slate-900"
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-auto px-6 pb-6 pt-4 text-slate-800">
+              <p className="text-sm text-slate-500">
+                {selectedPin.date || 'Unknown date'} • {selectedPin.time || 'Unknown time'}
+              </p>
+              {selectedImageSrc && (
+                <img
+                  src={selectedImageSrc}
+                  alt={selectedPin.placeName}
+                  className="mt-4 h-64 w-full rounded-3xl object-cover"
+                />
+              )}
+              {selectedPin.description && (
+                <p className="mt-4 text-base text-slate-700">{selectedPin.description}</p>
+              )}
+              {selectedPin.companions && (
+                <p className="mt-4 text-sm text-slate-600">
+                  <strong className="font-semibold text-slate-800">Companions:</strong> {selectedPin.companions}
+                </p>
+              )}
+              <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-xs text-slate-500">
+                Lat {formatCoordinate(selectedPin.latitude)} · Lon {formatCoordinate(selectedPin.longitude)}
+              </div>
+            </div>
+
+            <div className="border-t border-slate-200 px-6 py-4">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button
+                  type="button"
+                  onClick={closeSelectedPin}
+                  className="flex-1 rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400"
+                >
+                  Close
+                </button>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={handleEditSelectedPin}
+                    className="flex-1 rounded-2xl bg-cyan-500 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:bg-cyan-400"
+                  >
+                    Edit pin
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
