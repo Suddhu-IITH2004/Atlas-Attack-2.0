@@ -1,0 +1,1 @@
+if('serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/Atlas-Attack-2.0/sw.js', { scope: '/Atlas-Attack-2.0/' })})}
