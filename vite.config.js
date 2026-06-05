@@ -3,7 +3,6 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
-  base: '/Atlas-Attack-2.0/', // Add this line
   plugins: [
     react(),
     VitePWA({
